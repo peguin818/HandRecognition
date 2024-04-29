@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">HandRecognition</string>
+    <string name="asl_recognition">ASL Recognition</string>
+    <string name="start">Start</string>
+    <string name="final_project_comp1682">Final Project COMP1682</string>
+    <string name="add">Add</string>
+    <string name="space">⌴</string>
+    <string name="backspace">←</string>
+    <string name="added_letters_will_appear_here">Added letters will appear here.</string>
+</resources>
