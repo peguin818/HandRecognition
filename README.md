@@ -3,18 +3,19 @@
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [Technology Stack](#technology-stack)
-3. [System Architecture](#system-architecture)
-4. [Data](#data)
-5. [Application Design](#application-design)
-6. [Model Tuning](#model-tuning)
-7. [How To Use](#how-to-use)
+2. [Final Product Images](#final-product-images)
+3. [Technology Stack](#technology-stack)
+4. [System Architecture](#system-architecture)
+5. [Data](#data)
+6. [Application Design](#application-design)
+7. [Model Tuning](#model-tuning)
+8. [How To Use](#how-to-use)
 
 ## Project Overview
 
 The goal of this project is to empower deaf people by bridging communication gaps via the creation of an intuitive smartphone application that recognizes the alphabets of American Sign Language (ASL). This project makes use of deep learning and computer vision techniques to develop a mobile application that promotes more inclusive communication between hearing and deaf people.
 
-## Final project images
+## Final Product Images
 
 ### Home screen
 
