@@ -14,6 +14,27 @@
 
 The goal of this project is to empower deaf people by bridging communication gaps via the creation of an intuitive smartphone application that recognizes the alphabets of American Sign Language (ASL). This project makes use of deep learning and computer vision techniques to develop a mobile application that promotes more inclusive communication between hearing and deaf people.
 
+## Final project images
+
+### Home screen
+
+This is the home screen of the application. From here, users can click on 'Start' button to start the prediction process.
+Users must give camera permission in order for the application to work.
+
+![image](https://github.com/peguin818/HandRecognition/assets/109569292/c8af5122-fb12-4a1b-9987-d493946ecb49)
+![image](https://github.com/peguin818/HandRecognition/assets/109569292/221f1a79-ee52-4685-b8f4-04fb7993028d)
+
+
+### Main screen
+
+This is the main screen of the application. Users can perform ASL alphabet pose for the application to predict.
+Users can choose to add the predicted letter to make phrases, add space between words, or delete the last added character.
+![image](https://github.com/peguin818/HandRecognition/assets/109569292/1fab07cd-c1bc-4d4a-8969-d6e7045a4bbe)
+![image](https://github.com/peguin818/HandRecognition/assets/109569292/ce3c67e5-dddc-479b-a495-bfc6ba58e942)
+
+
+
+
 ## Technology Stack
 
 This project is built using the following technologies:
