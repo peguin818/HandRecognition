@@ -31,31 +31,45 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class signLanguageClass {
+    // Interpreter for the hand detection model
     private final Interpreter interpreter;
+    // Interpreter for the ASL recognition model
     private final Interpreter aslInterpreter;
+    // Input size for the hand detection model
     private final int INPUT_SIZE;
+    // Input size for the ASL recognition model
     private int aslInputSize = 0;
+    // String to store the combined letters
     private String combine_letters = "";
+    // String to store the current letter
     private String current_letter = "";
 
+    // Constructor for the signLanguageClass
     signLanguageClass(Button add_letter_button, Button backspace_button, Button space_button,
                       TextView combine_letters_text_view, AssetManager assetManager, String modelPath,
                       int inputSize, String aslModelPath, int aslInputSize) throws IOException {
+        // Set the input sizes for the models
         INPUT_SIZE = inputSize;
         this.aslInputSize = aslInputSize;
-        // use to define gpu or cpu and no. of threads
+
+        // Initialize the interpreters with the models
+        // Options for the hand detection model
         Interpreter.Options options = new Interpreter.Options();
-        // Used to initialize gpu in app
+        // Use GPU delegate for the hand detection model
         GpuDelegate gpuDelegate = new GpuDelegate();
         options.addDelegate(gpuDelegate);
-        // load model
+        // Load the hand detection model
         interpreter = new Interpreter(loadModelFile(assetManager, modelPath), options);
-        // use to define gpu or cpu and no. of threads
+
+        // Options for the ASL recognition model
         Interpreter.Options aslOptions = new Interpreter.Options();
+        // Use all available threads for the ASL recognition model
         aslOptions.setNumThreads(-1);
-        // load model
+        // Load the ASL recognition model
         aslInterpreter = new Interpreter(loadModelFile(assetManager, aslModelPath), aslOptions);
 
+        // Set up the buttons' onClickListeners
+        // Add the current letter to the combined letters when the add letter button is clicked
         add_letter_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -64,6 +78,7 @@ public class signLanguageClass {
             }
         });
 
+        // Remove the last letter from the combined letters when the backspace button is clicked
         backspace_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -77,6 +92,7 @@ public class signLanguageClass {
             }
         });
 
+        // Add a space to the combined letters when the space button is clicked
         space_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -86,88 +102,86 @@ public class signLanguageClass {
         });
     }
 
+    // Method to create a map for the output of the model
     @NonNull
     private static Map<Integer, Object> getIntegerObjectMap() {
+        // Create a TreeMap to store the output of the model
         Map<Integer, Object> output_map = new TreeMap<>();
-        // instead we create treemap of three array (boxes,score,classes)
-
+        // Array to store the bounding boxes of the detected objects
         float[][][] boxes = new float[1][10][4];
-        // 10: top 10 object detected
-        // 4: coordinate in image
+        // Array to store the scores of the detected objects
         float[][] scores = new float[1][10];
-        // stores scores of 10 object
+        // Array to store the classes of the detected objects
         float[][] classes = new float[1][10];
-        // stores class of object
-
-        // add it to object_map;
+        // Add the arrays to the output map
         output_map.put(0, boxes);
         output_map.put(1, classes);
         output_map.put(2, scores);
         return output_map;
     }
 
+    // Method to load the model file
     private ByteBuffer loadModelFile(AssetManager assetManager, String modelPath) throws IOException {
-        // use to get description of file
+        // Open the model file
         AssetFileDescriptor fileDescriptor = assetManager.openFd(modelPath);
         FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
         FileChannel fileChannel = inputStream.getChannel();
         long startOffset = fileDescriptor.getStartOffset();
         long declaredLength = fileDescriptor.getDeclaredLength();
 
+        // Map the model file into a ByteBuffer
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
 
-    // create new Mat function
+    // Method to recognize the image
     public Mat recognizeImage(Mat mat_image) {
-        // Rotate original image by 90 degree get get portrait frame
-
+        // Rotate the image to portrait orientation
         Mat rotated_mat_image = new Mat();
-
         Mat a = mat_image.t();
         Core.flip(a, rotated_mat_image, 1);
-        // Release mat
         a.release();
 
-        Bitmap bitmap = null;
-        bitmap = Bitmap.createBitmap(rotated_mat_image.cols(), rotated_mat_image.rows(), Bitmap.Config.ARGB_8888);
+        // Convert the Mat to a Bitmap
+        Bitmap bitmap = Bitmap.createBitmap(rotated_mat_image.cols(), rotated_mat_image.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(rotated_mat_image, bitmap);
-        // define height and width
         int height = bitmap.getHeight();
         int width = bitmap.getWidth();
 
-        // scale the bitmap to input size of model
+        // Scale the Bitmap to the input size of the model
         Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
 
-        // convert bitmap to bytebuffer as model input should be in it
+        // Convert the Bitmap to a ByteBuffer
         ByteBuffer byteBuffer = convertBitmapToByteBuffer(scaledBitmap);
 
+        // Create the input for the model
         Object[] input = new Object[1];
         input[0] = byteBuffer;
 
+        // Create the output map for the model
         Map<Integer, Object> output_map = getIntegerObjectMap();
 
-        // now predict
+        // Run the model
         interpreter.runForMultipleInputsOutputs(input, output_map);
 
+        // Get the output of the model
         Object value = output_map.get(0);
         Object Object_class = output_map.get(1);
         Object score = output_map.get(2);
 
-        // loop through each object
-        // as output has only 10 boxes
+        // Loop through each detected object
         for (int i = 0; i < 10; i++) {
             float class_value = (float) Array.get(Array.get(Object_class, 0), i);
             float score_value = (float) Array.get(Array.get(score, 0), i);
-            // define threshold for score
+            // If the score is above the threshold
             if (score_value > 0.9f) {
+                // Get the bounding box of the object
                 Object box1 = Array.get(Array.get(value, 0), i);
-                // we are multiplying it with Original height and width of frame
                 float y1 = (float) Array.get(box1, 0) * height;
                 float x1 = (float) Array.get(box1, 1) * width;
                 float y2 = (float) Array.get(box1, 2) * height;
                 float x2 = (float) Array.get(box1, 3) * width;
 
-                // set boundary limit
+                // Ensure the bounding box is within the image
                 if (y1 < 0) {
                     y1 = 0;
                 }
@@ -181,56 +195,60 @@ public class signLanguageClass {
                     x2 = width;
                 }
 
+                // Get the width and height of the bounding box
                 float width_roi = x2 - x1;
                 float height_roi = y2 - y1;
 
-                // crop hand image from original frame
+                // Crop the hand image from the original frame
                 Rect cropped_roi = new Rect((int) x1, (int) y1, (int) width_roi, (int) height_roi);
                 Mat cropped_image = new Mat(rotated_mat_image, cropped_roi).clone();
 
-                // convert cropped image to bitmap
-                Bitmap cropped_bitmap = Bitmap.createBitmap(cropped_image.cols(), cropped_image.rows()
-                        , Bitmap.Config.ARGB_8888);
+                // Convert the cropped image to a Bitmap
+                Bitmap cropped_bitmap = Bitmap.createBitmap(cropped_image.cols(), cropped_image.rows(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(cropped_image, cropped_bitmap);
 
-                // resize cropped bitmap to 96x96
-                Bitmap resized_bitmap = Bitmap.createScaledBitmap(cropped_bitmap,
-                        aslInputSize, aslInputSize, false);
+                // Resize the cropped Bitmap to the input size of the ASL model
+                Bitmap resized_bitmap = Bitmap.createScaledBitmap(cropped_bitmap, aslInputSize, aslInputSize, false);
 
-                // convert resized bitmap to bytebuffer
+                // Convert the resized Bitmap to a ByteBuffer
                 ByteBuffer aslByteBuffer = convertBitmapToByteBufferAsl(resized_bitmap);
 
-                // create output array
+                // Create the output for the ASL model
                 float[][] aslOutput = new float[1][1];
 
-                // predict output
+                // Run the ASL model
                 aslInterpreter.run(aslByteBuffer, aslOutput);
-                Log.d("ASL Output", String.valueOf(aslOutput[0][0]));
 
-                // convert float to alphabets
+                // Convert the output of the ASL model to a sign
                 String aslSign = getSign(aslOutput[0][0]);
 
-                // set current letter
+                // Log the sign recognized by the ASL model to the console for debugging purposes
+                Log.d("ASL Sign", "ASL Sign: " + aslSign);
+
+                // Set the current letter
                 current_letter = aslSign;
 
-                // add label to cropped image
-                Imgproc.putText(rotated_mat_image, aslSign,
-                        new Point(x1 + 10, y1 + 40), 3, 2, new Scalar(0, 255, 0, 255), 2);
+                // Add the sign to the image
+                Imgproc.putText(rotated_mat_image, aslSign, new Point(x1 + 10, y1 + 40), 3, 2, new Scalar(0, 255, 0, 255), 2);
 
-                // draw rectangle in Original frame //  starting point    // ending point of box  // color of box       thickness
+                // Draw the bounding box on the image
                 Imgproc.rectangle(rotated_mat_image, new Point(x1, y1), new Point(x2, y2), new Scalar(0, 255, 0, 255), 2);
             }
         }
-        // before returning rotate back by -90 degree
+
+        // Rotate the image back to the original orientation
         Mat b = rotated_mat_image.t();
         Core.flip(b, mat_image, 0);
         b.release();
 
+        // Return the image with the bounding boxes and signs
         return mat_image;
     }
 
+    // Method to convert the output of the ASL model to a sign
     private String getSign(float value) {
         String valueString;
+        // Convert the output value to a sign
         if (value >= -0.5 & value < 0.5) {
             valueString = "A";
         } else if (value >= 0.5 & value < 1.5) {
@@ -288,15 +306,19 @@ public class signLanguageClass {
         return valueString;
     }
 
+    // Method to convert a bitmap to a ByteBuffer
     private ByteBuffer convertBitmapToByteBuffer(Bitmap bitmap) {
         ByteBuffer byteBuffer;
         int size_images = INPUT_SIZE;
+        // Allocate a direct ByteBuffer of size 4 * size_images * size_images * 3
         byteBuffer = ByteBuffer.allocateDirect(4 * size_images * size_images * 3);
         byteBuffer.order(ByteOrder.nativeOrder());
         int[] intValues = new int[size_images * size_images];
+        // Get the pixels from the bitmap
         bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
         int pixel = 0;
 
+        // Loop through each pixel and add it to the ByteBuffer
         for (int i = 0; i < size_images; ++i) {
             for (int j = 0; j < size_images; ++j) {
                 final int val = intValues[pixel++];
@@ -309,15 +331,19 @@ public class signLanguageClass {
         return byteBuffer;
     }
 
+    // Method to convert a bitmap to a ByteBuffer for the ASL model
     private ByteBuffer convertBitmapToByteBufferAsl(Bitmap bitmap) {
         ByteBuffer byteBuffer;
         int size_images = aslInputSize;
+        // Allocate a direct ByteBuffer of size 4 * size_images * size_images * 3
         byteBuffer = ByteBuffer.allocateDirect(4 * size_images * size_images * 3);
         byteBuffer.order(ByteOrder.nativeOrder());
         int[] intValues = new int[size_images * size_images];
+        // Get the pixels from the bitmap
         bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
         int pixel = 0;
 
+        // Loop through each pixel and add it to the ByteBuffer
         for (int i = 0; i < size_images; ++i) {
             for (int j = 0; j < size_images; ++j) {
                 final int val = intValues[pixel++];
