@@ -150,7 +150,6 @@ public class CombineLettersActivity extends Activity implements CameraBridgeView
         mRgba = inputFrame.rgba();
 
         // Recognize the image
-
         return signLanguageClass.recognizeImage(mRgba);
     }
 }

@@ -4,7 +4,6 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,6 +18,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.Tensor;
 import org.tensorflow.lite.gpu.GpuDelegate;
 
 import java.io.FileInputStream;
@@ -38,7 +38,7 @@ public class signLanguageClass {
     // Input size for the hand detection model
     private final int INPUT_SIZE;
     // Input size for the ASL recognition model
-    private int aslInputSize = 0;
+    private final int aslInputSize;
     // String to store the combined letters
     private String combine_letters = "";
     // String to store the current letter
@@ -70,35 +70,26 @@ public class signLanguageClass {
 
         // Set up the buttons' onClickListeners
         // Add the current letter to the combined letters when the add letter button is clicked
-        add_letter_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                combine_letters += current_letter;
-                combine_letters_text_view.setText(combine_letters);
-            }
+        add_letter_button.setOnClickListener(view -> {
+            combine_letters += current_letter;
+            combine_letters_text_view.setText(combine_letters);
         });
 
         // Remove the last letter from the combined letters when the backspace button is clicked
-        backspace_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (combine_letters.isEmpty()) {
-                    combine_letters_text_view.setText("");
-                    Toast.makeText(view.getContext(), "No letters to delete", Toast.LENGTH_SHORT).show();
-                } else {
-                    combine_letters = combine_letters.substring(0, combine_letters.length() - 1);
-                    combine_letters_text_view.setText(combine_letters);
-                }
+        backspace_button.setOnClickListener(view -> {
+            if (combine_letters.isEmpty()) {
+                combine_letters_text_view.setText("");
+                Toast.makeText(view.getContext(), "No letters to delete", Toast.LENGTH_SHORT).show();
+            } else {
+                combine_letters = combine_letters.substring(0, combine_letters.length() - 1);
+                combine_letters_text_view.setText(combine_letters);
             }
         });
 
         // Add a space to the combined letters when the space button is clicked
-        space_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                combine_letters += " ";
-                combine_letters_text_view.setText(combine_letters);
-            }
+        space_button.setOnClickListener(view -> {
+            combine_letters += " ";
+            combine_letters_text_view.setText(combine_letters);
         });
     }
 
@@ -229,13 +220,12 @@ public class signLanguageClass {
                 current_letter = aslSign;
 
                 // Add the sign to the image
-                Imgproc.putText(rotated_mat_image, aslSign, new Point(x1 + 10, y1 + 40), 3, 2, new Scalar(0, 255, 0, 255), 2);
+                Imgproc.putText(rotated_mat_image, aslSign, new Point(x1 + 10, y1 + 60), Core.FONT_HERSHEY_SIMPLEX, 2, new Scalar(0, 255, 0, 255), 3);
 
                 // Draw the bounding box on the image
-                Imgproc.rectangle(rotated_mat_image, new Point(x1, y1), new Point(x2, y2), new Scalar(0, 255, 0, 255), 2);
+                Imgproc.rectangle(rotated_mat_image, new Point(x1, y1), new Point(x2, y2), new Scalar(0, 255, 0, 255), 3);
             }
         }
-
         // Rotate the image back to the original orientation
         Mat b = rotated_mat_image.t();
         Core.flip(b, mat_image, 0);
