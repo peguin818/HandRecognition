@@ -29,7 +29,6 @@ public class CombineLettersActivity extends Activity implements CameraBridgeView
 
     // Matrices for storing image data
     private Mat mRgba;
-    private Mat mGray;
 
     // OpenCV camera view
     private CameraBridgeViewBase mOpenCvCameraView;
@@ -86,7 +85,7 @@ public class CombineLettersActivity extends Activity implements CameraBridgeView
         try {
             signLanguageClass = new signLanguageClass(add_letter_button, backspace_button,
                     space_button, combine_letters_text_view, getAssets(), "hand_modelv2.tflite",
-                    300, "model.tflite", 96);
+                    300, "asl_model_updated.tflite", 96);
             Log.d("MainActivity", "Model is successfully loaded");
         } catch (IOException e) {
             Log.d("MainActivity", "Getting some error");
@@ -139,7 +138,6 @@ public class CombineLettersActivity extends Activity implements CameraBridgeView
     public void onCameraViewStarted(int width, int height) {
         // Initialize matrices with the size of the camera view
         mRgba = new Mat(height, width, CvType.CV_8UC4);
-        mGray = new Mat(height, width, CvType.CV_8UC1);
     }
 
     public void onCameraViewStopped() {
@@ -150,7 +148,6 @@ public class CombineLettersActivity extends Activity implements CameraBridgeView
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         // Get the RGBA and grayscale frames
         mRgba = inputFrame.rgba();
-        mGray = inputFrame.gray();
 
         // Recognize the image
 
