@@ -85,7 +85,7 @@ public class CombineLettersActivity extends Activity implements CameraBridgeView
         try {
             signLanguageClass = new signLanguageClass(add_letter_button, backspace_button,
                     space_button, combine_letters_text_view, getAssets(), "hand_modelv2.tflite",
-                    300, "asl_model_updated.tflite", 96);
+                    300, "model.tflite", 96);
             Log.d("MainActivity", "Model is successfully loaded");
         } catch (IOException e) {
             Log.d("MainActivity", "Getting some error");
